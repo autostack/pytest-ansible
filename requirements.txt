@@ -1,0 +1,6 @@
+pbr>=0.6,!=0.7,<1.0
+tox
+pytest
+ansible
+six
+redis>=2.7
