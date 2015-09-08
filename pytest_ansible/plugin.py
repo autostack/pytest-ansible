@@ -139,7 +139,8 @@ class Dispatcher(threading.Thread):
         self.do = True
 
     def _dispatch(self, host, data):
-        nodes = self.inventory.all.filter('address', host)[0]
+#        nodes = self.inventory.all.filter('address', host)[0]
+        nodes = self.inventory.all.filter(address=host)[0]
         try:
             setattr(nodes, data['invocation']['module_name'], data)
         except AttributeError:

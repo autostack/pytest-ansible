@@ -31,11 +31,9 @@ has_ansible_become = \
 class AnsibleRunnerCallback(callbacks.DefaultRunnerCallbacks):
     '''
     TODO:
-    - print logs
-    - load results to node objects using dispatcher
+    - handle logs
     '''
-    def __init__(self, env, queue):
-        self.inventory = env
+    def __init__(self, queue):
         self.rq = queue
 
     def on_ok(self, host, res):
@@ -70,7 +68,7 @@ class _AnsibleModule(object):
             return _AnsibleModule(queue=self.queue, **self.options)
 
     @classmethod
-    def __load_inventory(cls, nodes):
+    def _inventory_manager(cls, nodes):
         '''
         nodes: Compound instance slice from environment
         '''
@@ -85,10 +83,10 @@ class _AnsibleModule(object):
             raise pytest.UsageError("Failed to initiate inventory!, "
                                     "error: {0}".format(err))
 
-    def __call__(self, env, *args, **kwargs):
+    def __call__(self, nodes, *args, **kwargs):
         # Initialize ansible inventory manage
-        inventory_manager = self.__load_inventory(env)
-        runner_callbacks = AnsibleRunnerCallback(env, self.queue)
+        inventory_manager = self._inventory_manager(nodes)
+        runner_callbacks = AnsibleRunnerCallback(self.queue)
 
         # Assemble module argument string
         module_args = list()
@@ -145,7 +143,7 @@ class _AnsibleModule(object):
         '''
 
         playbook = playbook or self.options.get('playbook')
-        inventory_manager = self.__load_inventory(env)
+        inventory_manager = self._inventory_manager(env)
 
         # Make sure we aggregate the stats
         stats = callbacks.AggregateStats()
