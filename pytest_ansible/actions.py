@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 
-import os
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 import jinja2
 import pytest
 import ansible

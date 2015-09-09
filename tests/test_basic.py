@@ -70,4 +70,6 @@ def test_facts(env, ansible):
     env.set_concrete_os()
     pp(env)
     env.set_concrete_os()
+    ansible.setup(env.hosts)
     pp(env)
+    print(type(env.hosts[1].facts))

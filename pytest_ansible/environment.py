@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 import yaml
 
@@ -79,7 +81,7 @@ class Context(dict):
         for k, v in self.iteritems():
             try:
                 self.update([(k, v.get_concrete_class())])
-            except (TypeError, AttributeError):
+            except AttributeError:
                 # ignore non NodeTemplate objects
                 pass
 

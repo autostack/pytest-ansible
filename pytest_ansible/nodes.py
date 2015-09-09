@@ -31,6 +31,7 @@ class _BaseNode(object):
         self.address = address
         self.connection = kwargs.get('connection', 'smart')
         self.user = kwargs.get('user', 'root')
+        self._facts = None
 
     def __repr__(self):
         repr_template = ("<{0.__class__.__module__}.{0.__class__.__name__}"
@@ -38,12 +39,16 @@ class _BaseNode(object):
         return repr_template.format(self, hex(id(self)), self.address)
 
     @property
+    def facts(self):
+        return self._facts
+
+    def _load_setup(self, data):
+        self._facts = Facts(data['ansible_facts'])
+
+    @property
     def stripe(self):
         return '{ip} connection={conn} ansible_ssh_user={user}'.format(
             ip=self.address, conn=self.connection, user=self.user)
-
-    def get_concrete_class(self, data):
-        raise NotImplementedError
 
 
 class NodeTemplate(_BaseNode):
@@ -53,29 +58,15 @@ class NodeTemplate(_BaseNode):
         super(NodeTemplate, self).__init__(address, **kwargs)
         self._facts = None
 
-    @property
-    def facts(self):
-        return self._facts
-
-    @property
-    def setup(self):
-        return self._facts
-
-    @setup.setter
-    def setup(self, data):
-        self._facts = Facts(data['ansible_facts'])
-
     def get_concrete_class(self):
         if self.facts is None:
             return self
-        print('NodeTemplate.KLASS_REF', NodeTemplate.KLASS_REF)
         try:
-            print(self.facts.os_family.lower())
             klass = NodeTemplate.KLASS_REF[self.facts.os_family.lower()]
         except KeyError:
             klass = NodeTemplate.KLASS_REF['unknown']
         finally:
-            return klass.get_concrete_class(self.facts)(
+            return klass.get_concrete_os(self.facts)(
                 self.address, self.facts, connection=self.connection, user=self.user)
 
     @classmethod
@@ -91,20 +82,16 @@ class Node(_BaseNode):
         self._facts = facts
 
     @classmethod
-    def get_concrete_class(cls, facts):
+    def get_concrete_os(cls, facts):
         if hasattr(cls, 'registry'):
             for _, klass in cls.registry.iteritems():
                 try:
-                    if klass.get_concrete_class(facts):
+                    if klass.is_concrete_class(facts):
                         cls = klass
                         break
                 except:
                     raise
         return cls
-
-    @property
-    def facts(self):
-        return self._facts
 NodeTemplate.register(Node)
 
 
@@ -115,12 +102,12 @@ NodeTemplate.register(RedHat)
 
 class CentOS(RedHat):
     @classmethod
-    def get_concrete_class(cls, facts):
+    def is_concrete_class(cls, facts):
         return False
 
 
 class CentOS7(CentOS):
     @classmethod
-    def get_concrete_class(cls, facts):
+    def is_concrete_class(cls, facts):
         return facts.distribution == 'CentOS' and \
             int(facts.distribution_major_version) >= 7

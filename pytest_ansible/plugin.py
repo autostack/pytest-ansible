@@ -1,24 +1,22 @@
+#!/usr/bin/env python
+# -*- coding: UTF-8 -*-
+
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 import ansible
 import os
 import pytest
-import time
-import yaml
-import threading
 import ansible.constants as C
 
 from pytest_ansible.environment import initialize_environment
-from pytest_ansible.actions import initialize_ansible
+from pytest_ansible.actions import (initialize_ansible, has_ansible_become)
 from pytest_ansible.redisq import RedisQueue
+from pytest_ansible.dispatcher import Dispatcher
 
 from uuid import uuid4
-from pkg_resources import parse_version
 
 __author__ = 'Avi Tal <avi3tal@gmail.com>'
 __date__ = 'Sep 1, 2015'
-
-
-has_ansible_become = \
-    parse_version(ansible.__version__) >= parse_version('1.9.0')
 
 
 def pytest_addoption(parser):
@@ -129,39 +127,6 @@ def pytest_report_header(config):
     Include the version of infrastructure in the report header
     '''
     return 'Infrastructure version ...'
-
-
-class Dispatcher(threading.Thread):
-    def __init__(self, q, env):
-        super(Dispatcher, self).__init__()
-        self.rq = q
-        self.inventory = env
-        self.do = True
-
-    def _dispatch(self, host, data):
-#        nodes = self.inventory.all.filter('address', host)[0]
-        nodes = self.inventory.all.filter(address=host)[0]
-        try:
-            setattr(nodes, data['invocation']['module_name'], data)
-        except AttributeError:
-            pass
-
-    def run(self):
-        while self.do:
-            msg = self.rq.get()
-            if isinstance(msg, str) and msg == 'quit':
-                break
-            if msg is None:
-                time.sleep(2)
-                continue
-
-            # TODO: handle eval exception
-            msg = eval(msg)
-            if isinstance(msg, tuple):
-                self._dispatch(*msg)
-
-    def close(self):
-        self.do = False
 
 
 @pytest.yield_fixture(scope='session')
