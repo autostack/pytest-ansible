@@ -1,6 +1,7 @@
 CHANGES
 =======
 
+* adding _load_? mechanism to dispacher and nodes
 * add node os handle
 * init
 * Create README file

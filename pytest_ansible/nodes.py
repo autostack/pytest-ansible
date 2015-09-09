@@ -50,24 +50,34 @@ class _BaseNode(object):
         return '{ip} connection={conn} ansible_ssh_user={user}'.format(
             ip=self.address, conn=self.connection, user=self.user)
 
+    def get_concrete_class(self):
+        '''
+        An important abstract method that let us handle rerun
+        of Context.set_concrete_os() for non NodeTemplate objects.
+        '''
+        return self
+
 
 class NodeTemplate(_BaseNode):
     KLASS_REF = {}
 
     def __init__(self, address, **kwargs):
         super(NodeTemplate, self).__init__(address, **kwargs)
-        self._facts = None
 
     def get_concrete_class(self):
-        if self.facts is None:
-            return self
+        '''
+        parsing all parent OS classes registered to this class
+        and find out it has concrete os child registered unless
+        returning the parent class.
+        in case no parent OS have a fit, we return NodeTemplate so that
+        in the future user will have the ability to rerun get_concrete_class
+        and check is_concrete_class again.
+        '''
         try:
             klass = NodeTemplate.KLASS_REF[self.facts.os_family.lower()]
+            return klass.get_concrete_os(self.facts)(self)
         except KeyError:
-            klass = NodeTemplate.KLASS_REF['unknown']
-        finally:
-            return klass.get_concrete_os(self.facts)(
-                self.address, self.facts, connection=self.connection, user=self.user)
+            return self
 
     @classmethod
     def register(cls, klass):
@@ -75,11 +85,15 @@ class NodeTemplate(_BaseNode):
 
 
 class Node(_BaseNode):
-    OS_FAMILY = 'unknown'
+    '''
+    Interface class for all type of OS Nodes
+    '''
+    OS_FAMILY = None
 
-    def __init__(self, address, facts, **kwargs):
-        super(Node, self).__init__(address, **kwargs)
-        self._facts = facts
+    def __init__(self, node_template_inst):
+        node = node_template_inst
+        super(Node, self).__init__(
+            node.address, connection=node.connection, user=node.user)
 
     @classmethod
     def get_concrete_os(cls, facts):
@@ -92,7 +106,6 @@ class Node(_BaseNode):
                 except:
                     raise
         return cls
-NodeTemplate.register(Node)
 
 
 class RedHat(with_metaclass(RegisterClasses, Node)):
