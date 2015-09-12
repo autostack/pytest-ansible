@@ -8,7 +8,7 @@ import os
 import pytest
 import ansible.constants as C
 
-from pytest_ansible.environment import initialize_environment
+from pytest_ansible.environment import initialize_context
 from pytest_ansible.actions import (initialize_ansible, has_ansible_become)
 #from pytest_ansible.redisq import (RedisQueue, ZeroMQueue)
 from pytest_ansible.redisq import RedisQueue
@@ -114,7 +114,7 @@ def pytest_collection_modifyitems(session, config, items):
     global uses_infra_fixtures
     for item in items:
         try:
-            if any([fixture == 'env' for fixture in item.fixturenames]):
+            if any([fixture == 'ctx' for fixture in item.fixturenames]):
                 uses_infra_fixtures = True
                 break
         except AttributeError:
@@ -152,19 +152,19 @@ def pytest_internalerror(excrepr, excinfo):
 
 
 @pytest.yield_fixture(scope='session')
-def env(request):
+def ctx(request):
     '''
     Return Environment instance with function scope.
     '''
-    yield initialize_environment(request)
+    yield initialize_context(request)
 
 
 @pytest.yield_fixture(scope='session')
-def ansible(request, env):
+def ansible(request, ctx):
     '''
     Return _AnsibleModule instance with function scope.
     '''
-    consumer = Dispatcher(queue, env)
+    consumer = Dispatcher(queue, ctx)
     consumer.daemon = True
     consumer.start()
     yield initialize_ansible(request, queue)

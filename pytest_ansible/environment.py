@@ -86,7 +86,7 @@ class Context(dict):
                 pass
 
 
-def initialize_environment(request):
+def initialize_context(request):
     _ctx = Context()
     with open(request.config.getvalue('inventory'), 'r') as f:
         data = yaml.load(f)

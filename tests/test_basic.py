@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/ctx python
 # -*- coding: UTF-8 -*-
 
 import pytest
@@ -8,76 +8,68 @@ __author__ = 'Avi Tal <avi3tal@gmail.com>'
 __date__ = 'Sep 1, 2015'
 
 
-def test_ctx(env):
+def test_ctx(ctx):
     print
-    pp(env)
-    l1 = len(env)
+    pp(ctx)
+    l1 = len(ctx)
     print 'Adding test group'
-    env['test'] = []
-    print 'env.test >>', env.test
-    print 'type(env.test) >>', type(env.test)
-    assert len(env) - 1 == l1, 'Length was not increased'
+    ctx['test'] = []
+    print 'ctx.test >>', ctx.test
+    print 'type(ctx.test) >>', type(ctx.test)
+    assert len(ctx) - 1 == l1, 'Length was not increased'
 
     print 'Deleting test group'
-    del env['test']
-    l1 = len(env)
-    pp(env)
-    assert len(env) == l1, 'Length was not increased'
+    del ctx['test']
+    l1 = len(ctx)
+    pp(ctx)
+    assert len(ctx) == l1, 'Length was not increased'
 
 
-def test_all_attr_exists(env):
-    assert hasattr(env, 'all'), 'all attr does not exists'
-    assert hasattr(env, 'hosts'), 'hosts attr does not exists'
-    env['test'] = []
-    assert hasattr(env, 'test'), 'Failed to add new attr'
-    del env['test']
-    assert not hasattr(env, 'test'), 'Failed to delete new attr'
+def test_all_attr_exists(ctx):
+    assert hasattr(ctx, 'all'), 'all attr does not exists'
+    assert hasattr(ctx, 'hosts'), 'hosts attr does not exists'
+    ctx['test'] = []
+    assert hasattr(ctx, 'test'), 'Failed to add new attr'
+    del ctx['test']
+    assert not hasattr(ctx, 'test'), 'Failed to delete new attr'
 
 
-def test_slice(env):
+def test_slice(ctx):
     print
-    pp(env.all[:2])
-    pp(env.hosts[1])
-    pp(env.all[-1])
+    pp(ctx.all[:2])
+    pp(ctx.hosts[1])
+    pp(ctx.all[-1])
 
 
-def test_ping(env, ansible):
+def test_ping(ctx, ansible):
     print
-    pp(ansible.ping(env.all))
-    pp(ansible.ping(env.all[0]))
-    pp(ansible.ping(env.all[:-1]))
+    pp(ansible.ping(ctx.all))
+    pp(ansible.ping(ctx.all[0]))
+    pp(ansible.ping(ctx.all[:-1]))
 
 
-def test_hosts_uname(env, ansible):
+def test_hosts_uname(ctx, ansible):
     print
-    future = ansible.command(env.hosts, 'uname -a', run_async=True)
+    future = ansible.command(ctx.hosts, 'uname -a', run_async=True)
     print 'Future >>> ', future
     pp(future.wait(60, 2))
 
 
 @pytest.mark.parametrize('playbook', ['/Users/avi/git/pytest-infra/tests/play1.yml'])
-def test_play1(env, ansible, playbook):
+def test_play1(ctx, ansible, playbook):
     print
-    pp(ansible.run_playbook(env.hosts, playbook))
+    pp(ansible.run_playbook(ctx.hosts, playbook))
 
 
-def test_facts(env, ansible):
+def test_facts(ctx, ansible):
     print
-    ansible.setup(env.hosts)
-    pp(env)
-    pp(env.hosts[1].facts)
-#    print env.hosts.facts.default_ipv4.address
-    env.set_concrete_os()
-    pp(env)
-    env.set_concrete_os()
-    ansible.setup(env.hosts)
-    pp(env)
-    print(type(env.hosts[1].facts))
-
-
-def test_facts_test(env, ansible):
-    print
-    ansible.setup(env.hosts)
-    pp(env)
-    env.set_concrete_os()
-    pp(env)
+    ansible.setup(ctx.hosts)
+    pp(ctx)
+    pp(ctx.hosts[1].facts)
+#    print ctx.hosts.facts.default_ipv4.address
+    ctx.set_concrete_os()
+    pp(ctx)
+    ctx.set_concrete_os()
+    ansible.setup(ctx.hosts)
+    pp(ctx)
+    print(type(ctx.hosts[1].facts))
