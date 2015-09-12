@@ -5,3 +5,4 @@ pytest-cov
 coverage
 coveralls
 redis>=2.7
+pyzmq>=14.7.0

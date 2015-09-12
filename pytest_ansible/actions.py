@@ -38,7 +38,7 @@ class AnsibleRunnerCallback(callbacks.DefaultRunnerCallbacks):
         self.rq = queue
 
     def on_ok(self, host, res):
-        self.rq.put((host, res))
+        self.rq.put({'host': host, 'result': res})
         super(AnsibleRunnerCallback, self).on_ok(host, res)
 
 

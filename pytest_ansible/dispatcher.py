@@ -19,26 +19,25 @@ class Dispatcher(threading.Thread):
         self.inventory = env
         self.active = True
 
-    def _dispatch(self, host, data):
+    def _dispatch(self, host, result):
         nodes = self.inventory.all.filter(address=host)[0]
         try:
-            getattr(nodes, '_load_' + data['invocation']['module_name'])(data)
+            getattr(nodes, '_load_' + result['invocation']['module_name'])(result)
         except AttributeError:
             pass
 
     def run(self):
         while self.active:
-            msg = self._q.get()
-            if isinstance(msg, str) and msg == 'quit':
-                break
-            if msg is None:
-                time.sleep(2)
-                continue
-
-            # TODO: handle eval exception
-            msg = eval(msg)
-            if isinstance(msg, tuple):
-                self._dispatch(*msg)
+            msg = self._q.get(timeout=5)
+#            if msg is None:
+#                time.sleep(1)
+#                continue
+            if msg == 'goodbye':
+                self.close()
+            else:
+                # TODO: handle eval exception
+                if isinstance(msg, dict):
+                    self._dispatch(**msg)
 
     def close(self):
         self.active = False

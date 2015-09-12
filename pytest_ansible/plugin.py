@@ -10,13 +10,17 @@ import ansible.constants as C
 
 from pytest_ansible.environment import initialize_environment
 from pytest_ansible.actions import (initialize_ansible, has_ansible_become)
-from pytest_ansible.redisq import RedisQueue
+from pytest_ansible.redisq import (RedisQueue, ZeroMQueue)
 from pytest_ansible.dispatcher import Dispatcher
 
 from uuid import uuid4
 
 __author__ = 'Avi Tal <avi3tal@gmail.com>'
 __date__ = 'Sep 1, 2015'
+
+
+queue = None
+uses_infra_fixtures = False
 
 
 def pytest_addoption(parser):
@@ -93,6 +97,11 @@ def pytest_configure(config):
         ansible.utils.VERBOSITY = 5
 
 
+def pytest_unconfigure(config):
+    if uses_infra_fixtures:
+        queue.join()
+
+
 def _verify_inventory(config):
     # TODO: add yaml validation
     _inventory = config.getvalue('inventory')
@@ -103,7 +112,7 @@ def _verify_inventory(config):
 
 
 def pytest_collection_modifyitems(session, config, items):
-    uses_infra_fixtures = False
+    global uses_infra_fixtures
     for item in items:
         try:
             if any([fixture == 'env' for fixture in item.fixturenames]):
@@ -121,12 +130,26 @@ def pytest_collection_modifyitems(session, config, items):
         if errors:
             raise pytest.UsageError(*errors)
 
+        global queue
+        queue = RedisQueue()
+#        queue = ZeroMQueue()
+
 
 def pytest_report_header(config):
     '''
     Include the version of infrastructure in the report header
     '''
     return 'Infrastructure version ...'
+
+
+def pytest_keyboard_interrupt(excinfo):
+    if uses_infra_fixtures:
+        queue.join()
+
+
+def pytest_internalerror(excrepr, excinfo):
+    if uses_infra_fixtures:
+        queue.join()
 
 
 @pytest.yield_fixture(scope='session')
@@ -142,9 +165,7 @@ def ansible(request, env):
     '''
     Return _AnsibleModule instance with function scope.
     '''
-    queue = RedisQueue(str(uuid4()))
     consumer = Dispatcher(queue, env)
+    consumer.daemon = True
     consumer.start()
     yield initialize_ansible(request, queue)
-    queue.put('quit')
-    consumer.join()

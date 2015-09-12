@@ -53,7 +53,7 @@ class Compound(list):
         return Compound(sub)
 
     def filter(self, **kwargs):
-        '''Filter support only AND mode'''
+        '''Filter, support only AND mode'''
         nodes = self
         for k, v in kwargs.iteritems():
             nodes = self._filter(nodes, k, v)
