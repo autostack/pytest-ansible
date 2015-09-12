@@ -4,4 +4,4 @@ pytest
 ansible
 six
 redis>=2.7
-pyzmq>=14.7.0
+#pyzmq>=14.7.0

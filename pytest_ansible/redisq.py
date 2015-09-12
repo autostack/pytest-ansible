@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import redis
-import zmq
+#import zmq
 import time
 from uuid import uuid4
 from pytest_ansible.utils import get_open_port
@@ -74,32 +74,32 @@ class RedisQueue(object):
         self.put('goodbye')
 
 
-class ZeroMQueue(object):
-    def __init__(self, name=None, port='5556', host='127.0.0.1'):
-        self.topic = name or str(uuid4())
-        port = port or get_open_port(host)
-
-        subcontext = zmq.Context()
-        self._subscriber = subcontext.socket(zmq.PULL)
-        self._subscriber.bind('tcp://{}:{}'.format(host, port))
-
-        pubcontext = zmq.Context()
-        self._publisher = pubcontext.socket(zmq.PUSH)
-        self._publisher.connect('tcp://{}:{}'.format(host, port))
-
-    def put(self, item):
-        self._publisher.send_json(item)
-        time.sleep(1)
-
-    def get(self, block=True, timeout=None):
-        if block:
-            item = self._subscriber.recv_json()
-        else:
-            try:
-                item = self._subscriber.recv_json(flags=zmq.NOBLOCK)
-            except zmq.Again as e:
-                pass
-        return item
+#class ZeroMQueue(object):
+#    def __init__(self, name=None, port='5556', host='127.0.0.1'):
+#        self.topic = name or str(uuid4())
+#        port = port or get_open_port(host)
+#
+#        subcontext = zmq.Context()
+#        self._subscriber = subcontext.socket(zmq.PULL)
+#        self._subscriber.bind('tcp://{}:{}'.format(host, port))
+#
+#        pubcontext = zmq.Context()
+#        self._publisher = pubcontext.socket(zmq.PUSH)
+#        self._publisher.connect('tcp://{}:{}'.format(host, port))
+#
+#    def put(self, item):
+#        self._publisher.send_json(item)
+#        time.sleep(1)
+#
+#    def get(self, block=True, timeout=None):
+#        if block:
+#            item = self._subscriber.recv_json()
+#        else:
+#            try:
+#                item = self._subscriber.recv_json(flags=zmq.NOBLOCK)
+#            except zmq.Again as e:
+#                pass
+#        return item
 
     def join(self):
         self.put('goodbye')

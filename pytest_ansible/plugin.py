@@ -10,10 +10,9 @@ import ansible.constants as C
 
 from pytest_ansible.environment import initialize_environment
 from pytest_ansible.actions import (initialize_ansible, has_ansible_become)
-from pytest_ansible.redisq import (RedisQueue, ZeroMQueue)
+#from pytest_ansible.redisq import (RedisQueue, ZeroMQueue)
+from pytest_ansible.redisq import RedisQueue
 from pytest_ansible.dispatcher import Dispatcher
-
-from uuid import uuid4
 
 __author__ = 'Avi Tal <avi3tal@gmail.com>'
 __date__ = 'Sep 1, 2015'

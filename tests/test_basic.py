@@ -73,3 +73,11 @@ def test_facts(env, ansible):
     ansible.setup(env.hosts)
     pp(env)
     print(type(env.hosts[1].facts))
+
+
+def test_facts_test(env, ansible):
+    print
+    ansible.setup(env.hosts)
+    pp(env)
+    env.set_concrete_os()
+    pp(env)
