@@ -41,35 +41,42 @@ def test_slice(ctx):
     pp(ctx.all[-1])
 
 
-def test_ping(ctx, ansible):
+def test_ping(ctx, run):
     print
-    pp(ansible.ping(ctx.all))
-    pp(ansible.ping(ctx.all[0]))
-    pp(ansible.ping(ctx.all[:-1]))
+    pp(run.ping(ctx.all))
+    pp(run.ping(ctx.all[0]))
+    pp(run.ping(ctx.all[:-1]))
 
 
-def test_hosts_uname(ctx, ansible):
+def test_hosts_uname(ctx, run):
     print
-    future = ansible.command(ctx.hosts, 'uname -a', run_async=True)
+    future = run.command(ctx.hosts, 'uname -a', run_async=True)
     print 'Future >>> ', future
     pp(future.wait(60, 2))
 
 
 @pytest.mark.parametrize('playbook', ['/Users/avi/git/pytest-infra/tests/play1.yml'])
-def test_play1(ctx, ansible, playbook):
+def test_play1(ctx, run, playbook):
     print
-    pp(ansible.run_playbook(ctx.hosts, playbook))
+    pp(run.run_playbook(ctx.hosts, playbook))
 
 
-def test_facts(ctx, ansible):
+def test_facts(ctx, run):
     print
-    ansible.setup(ctx.hosts)
+    run.setup(ctx.hosts)
     pp(ctx)
     pp(ctx.hosts[1].facts)
 #    print ctx.hosts.facts.default_ipv4.address
     ctx.set_concrete_os()
     pp(ctx)
     ctx.set_concrete_os()
-    ansible.setup(ctx.hosts)
+    run.setup(ctx.hosts)
+    pp(ctx)
+    print(type(ctx.hosts[1].facts))
+
+
+def test_only_ctx_facts(ctx):
+    print
+    pp(ctx.hosts[1].facts)
     pp(ctx)
     print(type(ctx.hosts[1].facts))

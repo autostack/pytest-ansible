@@ -13,10 +13,10 @@ __date__ = 'Sep 9, 2015'
 
 
 class Dispatcher(threading.Thread):
-    def __init__(self, queue, env):
+    def __init__(self, queue, ctx):
         super(Dispatcher, self).__init__()
         self._q = queue
-        self.inventory = env
+        self.inventory = ctx
         self.active = True
 
     def _dispatch(self, host, result):

@@ -19,7 +19,7 @@ __date__ = 'Sep 1, 2015'
 
 
 queue = None
-uses_infra_fixtures = False
+requires_inventory = False
 
 
 def pytest_addoption(parser):
@@ -96,11 +96,6 @@ def pytest_configure(config):
         ansible.utils.VERBOSITY = 5
 
 
-def pytest_unconfigure(config):
-    if uses_infra_fixtures:
-        queue.join()
-
-
 def _verify_inventory(config):
     # TODO: add yaml validation
     _inventory = config.getvalue('inventory')
@@ -111,16 +106,17 @@ def _verify_inventory(config):
 
 
 def pytest_collection_modifyitems(session, config, items):
-    global uses_infra_fixtures
+    requires_inventory = False
+    enable_queue = False
     for item in items:
         try:
-            if any([fixture == 'ctx' for fixture in item.fixturenames]):
-                uses_infra_fixtures = True
-                break
+            if not requires_inventory:
+                if any([fixture == 'ctx' for fixture in item.fixturenames]):
+                    requires_inventory = True
         except AttributeError:
             continue
 
-    if uses_infra_fixtures:
+    if requires_inventory:
         errors = []
         if not _verify_inventory(config):
             errors.append("Unable to load an inventory file, "
@@ -128,10 +124,6 @@ def pytest_collection_modifyitems(session, config, items):
 
         if errors:
             raise pytest.UsageError(*errors)
-
-        global queue
-        queue = RedisQueue()
-#        queue = ZeroMQueue()
 
 
 def pytest_report_header(config):
@@ -142,12 +134,12 @@ def pytest_report_header(config):
 
 
 def pytest_keyboard_interrupt(excinfo):
-    if uses_infra_fixtures:
+    if queue is not None:
         queue.join()
 
 
 def pytest_internalerror(excrepr, excinfo):
-    if uses_infra_fixtures:
+    if queue is not None:
         queue.join()
 
 
@@ -160,11 +152,17 @@ def ctx(request):
 
 
 @pytest.yield_fixture(scope='session')
-def ansible(request, ctx):
+def run(request, ctx):
     '''
     Return _AnsibleModule instance with function scope.
     '''
+    global queue
+    queue = RedisQueue()
+#    queue = ZeroMQueue()
+
     consumer = Dispatcher(queue, ctx)
     consumer.daemon = True
     consumer.start()
+
     yield initialize_ansible(request, queue)
+    queue.join()

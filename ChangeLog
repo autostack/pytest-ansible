@@ -1,6 +1,7 @@
 CHANGES
 =======
 
+* rename env fixture to ctx
 * remove zmq temporarily
 * finalize redis queue
 * add avstract get_concrete_class to BaseNode

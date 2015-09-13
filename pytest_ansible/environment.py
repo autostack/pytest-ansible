@@ -15,7 +15,6 @@ class Compound(list):
     '''
     '''
     def __call__(self, *args, **kwargs):
-        # TODO: run in parallel
         return Compound([child(*args, **kwargs)
                          for child in super(Compound, self).__iter__()])
 
