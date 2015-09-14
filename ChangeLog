@@ -1,6 +1,7 @@
 CHANGES
 =======
 
+* rename ansible fixture to run and change location of init RedisQueue within plugin
 * rename env fixture to ctx
 * remove zmq temporarily
 * finalize redis queue

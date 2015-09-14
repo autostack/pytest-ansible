@@ -35,11 +35,29 @@ class AnsibleRunnerCallback(callbacks.DefaultRunnerCallbacks):
     - handle logs
     '''
     def __init__(self, queue):
-        self.rq = queue
+        self._q = queue
 
     def on_ok(self, host, res):
-        self.rq.put({'host': host, 'result': res})
+        self._q.put({'host': host, 'result': res})
         super(AnsibleRunnerCallback, self).on_ok(host, res)
+
+    def on_async_ok(self, host, res, jid):
+        self._q.put({'host': host, 'result': res})
+        super(AnsibleRunnerCallback, self).on_async_ok(host, res, jid)
+
+
+class AnsiblePlaybookRunnerCallback(callbacks.PlaybookRunnerCallbacks):
+    def __init__(self, queue, *args, **kwargs):
+        super(AnsiblePlaybookRunnerCallback, self).__init__(*args, **kwargs)
+        self._q = queue
+
+    def on_ok(self, host, res):
+        self._q.put({'host': host, 'result': res})
+        super(AnsiblePlaybookRunnerCallback, self).on_ok(host, res)
+
+    def on_async_ok(self, host, res, jid):
+        self._q.put({'host': host, 'result': res})
+        super(AnsiblePlaybookRunnerCallback, self).on_async_ok(host, res, jid)
 
 
 class _AnsibleModule(object):
@@ -83,6 +101,10 @@ class _AnsibleModule(object):
         except Exception as err:
             raise pytest.UsageError("Failed to initiate inventory!, "
                                     "error: {0}".format(err))
+
+    def setup_context(self, ctx):
+        self.setup(ctx.all)
+        ctx.set_concrete_os()
 
     def __call__(self, nodes, *args, **kwargs):
         # Initialize ansible inventory manage
@@ -150,8 +172,9 @@ class _AnsibleModule(object):
         stats = callbacks.AggregateStats()
         playbook_cb = callbacks.PlaybookCallbacks(
             verbose=ansible.utils.VERBOSITY)
-        runner_cb = callbacks.PlaybookRunnerCallbacks(
-            stats, verbose=ansible.utils.VERBOSITY)
+        runner_cb = AnsiblePlaybookRunnerCallback(
+            self.queue, stats, verbose=ansible.utils.VERBOSITY)
+
 
         # TODO: add forks=int
         pb = ansible.playbook.PlayBook(

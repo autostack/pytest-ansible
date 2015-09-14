@@ -61,7 +61,7 @@ def test_play1(ctx, run, playbook):
     pp(run.run_playbook(ctx.hosts, playbook))
 
 
-def test_facts(ctx, run):
+def test_setup_manually(ctx, run):
     print
     run.setup(ctx.hosts)
     pp(ctx)
@@ -73,6 +73,13 @@ def test_facts(ctx, run):
     run.setup(ctx.hosts)
     pp(ctx)
     print(type(ctx.hosts[1].facts))
+
+
+def test_setup_context(ctx, run):
+    print
+    run.setup_context(ctx)
+    pp(ctx)
+    pp(ctx.hosts[1].facts)
 
 
 def test_only_ctx_facts(ctx):

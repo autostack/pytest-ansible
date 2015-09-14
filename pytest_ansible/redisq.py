@@ -100,6 +100,6 @@ class RedisQueue(object):
 #            except zmq.Again as e:
 #                pass
 #        return item
-
-    def join(self):
-        self.put('goodbye')
+#
+#    def join(self):
+#        self.put('goodbye')
