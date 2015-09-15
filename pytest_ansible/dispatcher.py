@@ -28,10 +28,10 @@ class Dispatcher(threading.Thread):
 
     def run(self):
         while self.active:
-            msg = self._q.get(timeout=5)
-#            if msg is None:
-#                time.sleep(1)
-#                continue
+            msg = self._q.get(timeout=60)
+            if msg is None:
+                time.sleep(5)
+                continue
             if msg == 'goodbye':
                 self.close()
             else:

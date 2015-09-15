@@ -55,7 +55,7 @@ def test_hosts_uname(ctx, run):
     pp(future.wait(60, 2))
 
 
-@pytest.mark.parametrize('playbook', ['/Users/avi/git/pytest-infra/tests/play1.yml'])
+@pytest.mark.parametrize('playbook', ['/Users/avi/git/pytest-ansible/tests/play1.yml'])
 def test_play1(ctx, run, playbook):
     print
     pp(run.run_playbook(ctx.hosts, playbook))

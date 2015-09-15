@@ -107,7 +107,6 @@ def _verify_inventory(config):
 
 def pytest_collection_modifyitems(session, config, items):
     requires_inventory = False
-    enable_queue = False
     for item in items:
         try:
             if not requires_inventory:
