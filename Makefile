@@ -96,7 +96,7 @@ python:
 install:
 	$(PYTHON) setup.py install
 
-sdist: clean docs
+sdist: clean
 	$(PYTHON) setup.py sdist
 
 rpmcommon: sdist

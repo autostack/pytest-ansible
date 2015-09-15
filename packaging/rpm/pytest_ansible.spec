@@ -5,7 +5,7 @@ Summary: Plugin for py.test to manipulate ansible capabilities
 Name: %{name}
 Version: %{version}
 Release: 1%{?dist}
-Source0: %{name}-%{unmangled_version}.tar.gz
+Source0: %{name}-%{version}.tar.gz
 License: MIT
 Group: Development/Libraries
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
@@ -42,7 +42,7 @@ Advanced pytest plugin for manipulating Ansible builtin capabilities
 
 
 %prep
-%setup -n %{name}-%{unmangled_version} -n %{name}-%{unmangled_version}
+%setup -n %{name}-%{version} -n %{name}-%{version}
 
 %build
 python setup.py build
