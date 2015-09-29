@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+* fix version variobles
+* adding spec
+* removing examples dir
+* adding rpm pacjaging
 * adding more callbacks for async and playbook
 * rename ansible fixture to run and change location of init RedisQueue within plugin
 * rename env fixture to ctx

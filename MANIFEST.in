@@ -1,6 +1,5 @@
 prune packaging
 prune tests
-prune hacking
 include README.md packaging/rpm/pytest_ansible.spec LICENSE
 include MANIFEST.in
 include *.py
