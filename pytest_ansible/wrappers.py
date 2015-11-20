@@ -1,12 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 
-# import jinja2
 import ansible
-# import pytest
 import ansible.constants as C
-
-from ansible.inventory import Inventory
 from ansible.runner import Runner
 from ansible import callbacks
 
@@ -14,11 +10,9 @@ from pytest_ansible.errors import AnsibleCompoundException
 from pytest_ansible.node import get_node
 
 from pkg_resources import parse_version
-# from tempfile import NamedTemporaryFile
 
-
-has_ansible_become = \
-    parse_version(ansible.__version__) >= parse_version('1.9.0')
+# has_ansible_become = \
+#     parse_version(ansible.__version__) >= parse_version('1.9.0')
 
 
 class AnsibleRunnerCallback(callbacks.DefaultRunnerCallbacks):
@@ -27,13 +21,11 @@ class AnsibleRunnerCallback(callbacks.DefaultRunnerCallbacks):
     - handle logs
     '''
     def on_ok(self, host, res):
-        get_node(host, self.runner.inventory).load(res)
-        print('Loading on_ok', get_node(host, self.runner.inventory), res)
+        get_node(host, self.runner.inventory).dispatch(**res)
         super(AnsibleRunnerCallback, self).on_ok(host, res)
 
     def on_async_ok(self, host, res, jid):
-        get_node(host, self.runner.inventory).load(res)
-        print('Loading on_async_ok', get_node(host, self.runner.inventory), res)
+        get_node(host, self.runner.inventory).dispatch(**res)
         super(AnsibleRunnerCallback, self).on_async_ok(host, res, jid)
 
 
@@ -103,7 +95,6 @@ class AnsibleModule(object):
         #     )
 
         runner = Runner(**kwargs)
-        # return runner.run()
 
         # Run the module
         if async:
@@ -172,48 +163,3 @@ class _ExtendedPoller(object):
     def wait(self, seconds, poll_interval):
         self.__res = self.__poll.wait(seconds, poll_interval)
         return self.__expose_failure()
-
-
-# class AnsibleHost(AnsibleModule):
-#     '''
-#     '''
-#     INVENTORY_TEMPLATE='''
-# [host]
-# {{ip_address}}
-# [host:vars]
-# {{host_vars}}
-# '''
-#
-#     def __init__(self, host, **kwargs):
-#         '''
-#         Initialise Ansible host wrapper
-#         :param host: ansible host object
-#         '''
-#         try:
-#             # render inventory per host
-#             inventory_template = jinja2.Template(self.INVENTORY_TEMPLATE)
-#             rendered_inventory = inventory_template.render(
-#                 dict(ip_address=host.name,
-#                      host_vars='\n'.join(['{}={}'.format(k, v)
-#                                           for k, v in host.vars.iteritems()])))
-#
-#             # Generate temporary inventory
-#             temp = NamedTemporaryFile(delete=False)
-#             temp.write(rendered_inventory)
-#             temp.close()
-#
-#             # load inventory from temporary file
-#             i_m = ansible.inventory.Inventory(temp.name)
-#         except Exception as err:
-#             raise pytest.UsageError("Failed to initiate inventory!, "
-#                                     "error: {0}".format(err))
-#
-#         super(AnsibleHost, self).__init__(
-#             inventory_manager=i_m, pattern='*', **kwargs)
-
-if __name__ == '__main__':
-    i = Inventory('../inventory1.yaml')
-    mod = AnsibleModule(inventory_manager=i, pattern='127.0.0.1')
-    print mod
-    print mod.ping()
-    print mod.shell('pwd')

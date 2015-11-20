@@ -11,6 +11,17 @@ from pytest_ansible.wrappers import AnsibleGroup
 from ansible.inventory import Inventory
 
 
+class CallableNode(object):
+    def __init__(self, node):
+        self.node = node
+
+    def __getattr__(self, item):
+        try:
+            return getattr(self.node, item)
+        except AttributeError:
+            return AnsibleGroup([self.node], module_name=item)
+
+
 class GroupDispatch(list):
 
     def __call__(self, *args, **kwargs):
@@ -38,7 +49,8 @@ class GroupDispatch(list):
 
     def __getitem__(self, item):
         item = super(GroupDispatch, self).__getitem__(item)
-        return GroupDispatch([item])
+        # return GroupDispatch([item])
+        return CallableNode(item)
 
     # def __add__(self, y):
     #     iterable = super(AnsibleGroup, self).__add__(y)
@@ -99,14 +111,20 @@ def load_context(inventory):
     return ctx
 
 
-if __name__ == '__main__':
-    _ctx = load_context('../inventory1.yaml')
-    # print _ctx
-    # for n in _ctx.nodes:
-    #     print n.name, n
-    # print _ctx.nodes.command('pwd')
-    a = _ctx.nodes[-1].command('uptime', run_async=True)
-    print('BEFORE', _ctx.nodes[-1].res)
-    # print _ctx.nodes.vars
-    print(a.wait(10, 1))
-    print('AFTER', _ctx.nodes[-1].res)
+# if __name__ == '__main__':
+#     _ctx = load_context('../inventory1.yaml')
+#     print(_ctx)
+#     for n in _ctx.nodes:
+#         print(n.name, n)
+#     print(_ctx.nodes.command('pwd'))
+#     print(_ctx.nodes[-1].ping())
+#     a = _ctx.nodes[-1].command('uname', run_async=True)
+#     print(_ctx.nodes.command('pwd'))
+#     print('BEFORE', _ctx.nodes[-1].res)
+#     print(_ctx.nodes.vars)
+#     print(a.wait(10, 1))
+#     print('AFTER', _ctx.nodes[-1].res)
+#     from pprint import pprint as pp
+#     print(_ctx.nodes[-1].facts)
+#     _ctx.nodes[-1].setup()
+#     pp(_ctx.nodes[-1].facts.ansible_p2p0.device)

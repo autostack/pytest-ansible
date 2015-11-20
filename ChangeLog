@@ -1,6 +1,11 @@
 CHANGES
 =======
 
+* new README
+* update version to 2.0.0
+* push new code base with major changes
+* remove old modules
+* deprecated message
 * fix version variobles
 * adding spec
 * removing examples dir

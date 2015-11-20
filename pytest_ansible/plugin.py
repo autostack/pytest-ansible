@@ -4,82 +4,76 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 import ansible
-import os
 import pytest
-import ansible.constants as C
+# import ansible.constants as C
 
-# from pytest_ansible.environment import initialize_context
-# from pytest_ansible.actions import (initialize_ansible, has_ansible_become)
-
-
-queue = None
-requires_inventory = False
+from pytest_ansible.context import load_context
 
 
 def pytest_addoption(parser):
     '''Add options to control ansible.'''
 
-    group = parser.getgroup('pytest-infra')
-    group.addoption('--inventory',
+    group = parser.getgroup('pytest-ansible')
+    group.addoption('--ansible-inventory',
                     default=None,
                     action='store',
                     help='Inventory file URI (default: %default)')
-    group.addoption('--ansible-playbook',
-                    action='store',
-                    dest='ansible_playbook',
-                    default=None,
-                    metavar='ANSIBLE_PLAYBOOK',
-                    help='ansible playbook file URI (default: %default)')
-    group.addoption('--ansible-connection',
-                    action='store',
-                    dest='ansible_connection',
-                    default=C.DEFAULT_TRANSPORT,
-                    help="connection type to use (default: %default)")
-    group.addoption('--ansible-user',
-                    action='store',
-                    dest='ansible_user',
-                    default=C.DEFAULT_REMOTE_USER,
-                    help='connect as this user (default: %default)')
+    # group.addoption('--ansible-playbook',
+    #                 action='store',
+    #                 dest='ansible_playbook',
+    #                 default=None,
+    #                 metavar='ANSIBLE_PLAYBOOK',
+    #                 help='ansible playbook file URI (default: %default)')
+    # group.addoption('--ansible-connection',
+    #                 action='store',
+    #                 dest='ansible_connection',
+    #                 default=C.DEFAULT_TRANSPORT,
+    #                 help="connection type to use (default: %default)")
+    # group.addoption('--ansible-user',
+    #                 action='store',
+    #                 dest='ansible_user',
+    #                 default=C.DEFAULT_REMOTE_USER,
+    #                 help='connect as this user (default: %default)')
     group.addoption('--ansible-debug',
                     action='store_true',
                     dest='ansible_debug',
                     default=False,
                     help='enable ansible connection debugging')
 
-    # classic privilege escalation
-    group.addoption('--ansible-sudo',
-                    action='store_true',
-                    dest='ansible_sudo',
-                    default=C.DEFAULT_SUDO,
-                    help="run operations with sudo [nopasswd] "
-                    "(default: %default) (deprecated, use become)")
-    group.addoption('--ansible-sudo-user',
-                    action='store',
-                    dest='ansible_sudo_user',
-                    default='root',
-                    help="desired sudo user (default: %default) "
-                    "(deprecated, use become)")
-
-    if has_ansible_become:
-        # consolidated privilege escalation
-        group.addoption('--ansible-become',
-                        action='store_true',
-                        dest='ansible_become',
-                        default=C.DEFAULT_BECOME,
-                        help="run operations with become, "
-                        "nopasswd implied (default: %default)")
-        group.addoption('--ansible-become-method',
-                        action='store',
-                        dest='ansible_become_method',
-                        default=C.DEFAULT_BECOME_METHOD,
-                        help="privilege escalation method to use "
-                        "(default: %%default), valid "
-                        "choices: [ %s ]" % (' | '.join(C.BECOME_METHODS)))
-        group.addoption('--ansible-become-user',
-                        action='store',
-                        dest='ansible_become_user',
-                        default=C.DEFAULT_BECOME_USER,
-                        help='run operations as this user (default: %default)')
+    # # classic privilege escalation
+    # group.addoption('--ansible-sudo',
+    #                 action='store_true',
+    #                 dest='ansible_sudo',
+    #                 default=C.DEFAULT_SUDO,
+    #                 help="run operations with sudo [nopasswd] "
+    #                 "(default: %default) (deprecated, use become)")
+    # group.addoption('--ansible-sudo-user',
+    #                 action='store',
+    #                 dest='ansible_sudo_user',
+    #                 default='root',
+    #                 help="desired sudo user (default: %default) "
+    #                 "(deprecated, use become)")
+    #
+    # if has_ansible_become:
+    #     # consolidated privilege escalation
+    #     group.addoption('--ansible-become',
+    #                     action='store_true',
+    #                     dest='ansible_become',
+    #                     default=C.DEFAULT_BECOME,
+    #                     help="run operations with become, "
+    #                     "nopasswd implied (default: %default)")
+    #     group.addoption('--ansible-become-method',
+    #                     action='store',
+    #                     dest='ansible_become_method',
+    #                     default=C.DEFAULT_BECOME_METHOD,
+    #                     help="privilege escalation method to use "
+    #                     "(default: %%default), valid "
+    #                     "choices: [ %s ]" % (' | '.join(C.BECOME_METHODS)))
+    #     group.addoption('--ansible-become-user',
+    #                     action='store',
+    #                     dest='ansible_become_user',
+    #                     default=C.DEFAULT_BECOME_USER,
+    #                     help='run operations as this user (default: %default)')
 
 
 def pytest_configure(config):
@@ -117,45 +111,21 @@ def pytest_configure(config):
 #
 #         if errors:
 #             raise pytest.UsageError(*errors)
-#
-#
-# def pytest_report_header(config):
-#     '''
-#     Include the version of infrastructure in the report header
-#     '''
-#     return 'Infrastructure version ...'
-#
-#
-# def pytest_keyboard_interrupt(excinfo):
-#     if queue is not None:
-#         queue.join()
-#
-#
-# def pytest_internalerror(excrepr, excinfo):
-#     if queue is not None:
-#         queue.join()
-#
-#
-# @pytest.yield_fixture(scope='session')
-# def ctx(request):
-#     '''
-#     Return Environment instance with function scope.
-#     '''
-#     yield initialize_context(request)
-#
-#
-# @pytest.yield_fixture(scope='session')
-# def run(request, ctx):
-#     '''
-#     Return _AnsibleModule instance with function scope.
-#     '''
-#     global queue
-#     queue = RedisQueue()
-# #    queue = ZeroMQueue()
-#
-#     consumer = Dispatcher(queue, ctx)
-#     consumer.daemon = True
-#     consumer.start()
-#
-#     yield initialize_ansible(request, queue)
-#     queue.join()
+
+
+def pytest_report_header(config):
+    '''
+    Include the version of infrastructure in the report header
+    '''
+    return 'Pytest Ansible'
+
+
+@pytest.yield_fixture(scope='session')
+def ctx(request):
+    '''
+    Return Environment instance with function scope.
+    '''
+    inventory = request.config.getvalue('ansible_inventory')
+    yield load_context(inventory=inventory)
+
+

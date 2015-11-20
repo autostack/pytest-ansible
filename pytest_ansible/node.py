@@ -7,26 +7,39 @@ from __future__ import (absolute_import, division, print_function,
 from pytest_ansible.utils import memoize
 
 
-# class Node(AnsibleHost):
-#     def __init__(self, host, **kwargs):
-#         super(Node, self).__init__(host=host, **kwargs)
-#         self._host = host
-#
-#     def __getattr__(self, item):
-#         try:
-#             return getattr(self._host, item)
-#         except AttributeError:
-#             return super(Node, self).__getattr__(item)
-#
-#     def foo(self):
-#         return 'AAAAAAAA'
+class Facts(dict):
+    PREF = 'ansible_'
+
+    def __getattr__(self, attr):
+        try:
+            data = self[attr]
+        except KeyError:
+            if attr.startswith(self.PREF):
+                raise
+            attr = '{}{}'.format(self.PREF, attr)
+            data = getattr(self, attr)
+        if isinstance(data, dict):
+            data = Facts(data)
+        return data
 
 
 class Node(object):
     def __init__(self, name, inventory):
         self._name = name
         self._inventory = inventory
-        self.res = None
+        self._facts = None
+
+    def __repr__(self):
+        repr_template = ("<{0.__class__.__module__}.{0.__class__.__name__}"
+                         " object at {1} | name {2}>")
+        return repr_template.format(self, hex(id(self)), self.name)
+
+    def _load_setup(self, data):
+        self._facts = Facts(data['ansible_facts'])
+
+    @property
+    def facts(self):
+        return self._facts
 
     @property
     def vars(self):
@@ -37,16 +50,17 @@ class Node(object):
         return self._name
 
     @property
-    def ipv4_address(self):
-        return self.inventory.get_host(self._name).ipv4_address
-
-    @property
     def inventory(self):
         return self._inventory
 
-    def load(self, res):
+    # def dispatch(self, invocation, changed, **kwargs):
+    def dispatch(self, **kwargs):
         # FIXME: this is just a poc for loading results
-        self.res = res
+        invocation = kwargs.get('invocation')
+        try:
+            getattr(self, '_load_' + invocation['module_name'])(kwargs)
+        except (AttributeError, KeyError):
+            pass
 
 
 @memoize
@@ -55,7 +69,6 @@ def get_node(name, inventory):
     Generating Node object base on given ansible host instance
     :param name: host name
     :param inventory: inventory manager instance
-    :param kwargs: set of dynamic attributes input by CLI or markers
     :return: Node()
     '''
     return Node(name, inventory)

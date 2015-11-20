@@ -45,7 +45,6 @@ def memoize(f):
 
         def __missing__(self, key):
             ret = self[key] = f(*key)
-            print('Create new Node {}={}'.format(key[0], ret))
             return ret
 
     return memodict().__getitem__
