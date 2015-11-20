@@ -1,3 +1,4 @@
 # pytest-ansible
-Old repository!!!!!!!!
-The project moved to pytest-autostack
+Pytest integraation with Ansible and also maintain object structure of SUT
+
+Undet Dev

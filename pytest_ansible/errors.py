@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+
 import ansible.errors
 import pprint
-
-__author__ = 'Avi Tal <avi3tal@gmail.com>'
-__date__ = 'Aug 30, 2015'
 
 
 class AnsibleNoHostsMatch(ansible.errors.AnsibleError):
