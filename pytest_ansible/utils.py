@@ -5,9 +5,6 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 import socket
 
-__author__ = 'Avi Tal <avi3tal@gmail.com>'
-__date__ = 'Sep 8, 2015'
-
 
 class RegisterClasses(type):
     def __init__(cls, name, bases, dct):
@@ -26,3 +23,29 @@ def get_open_port(host='127.0.0.1'):
     port = s.getsockname()[1]
     s.close()
     return port
+
+
+# def memoize(f):
+#     """
+#     Memoization decorator for a function taking a single argument
+#     """
+#     class memodict(dict):
+#         def __missing__(self, key):
+#             ret = self[key] = f(key)
+#             return ret
+#     return memodict
+
+def memoize(f):
+    """
+    Memoization decorator for a function taking one or more arguments
+    """
+    class memodict(dict):
+        def __getitem__(self, *key):
+            return dict.__getitem__(self, key)
+
+        def __missing__(self, key):
+            ret = self[key] = f(*key)
+            print('Create new Node {}={}'.format(key[0], ret))
+            return ret
+
+    return memodict().__getitem__

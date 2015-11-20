@@ -8,14 +8,8 @@ import os
 import pytest
 import ansible.constants as C
 
-from pytest_ansible.environment import initialize_context
-from pytest_ansible.actions import (initialize_ansible, has_ansible_become)
-#from pytest_ansible.redisq import (RedisQueue, ZeroMQueue)
-from pytest_ansible.redisq import RedisQueue
-from pytest_ansible.dispatcher import Dispatcher
-
-__author__ = 'Avi Tal <avi3tal@gmail.com>'
-__date__ = 'Sep 1, 2015'
+# from pytest_ansible.environment import initialize_context
+# from pytest_ansible.actions import (initialize_ansible, has_ansible_become)
 
 
 queue = None
@@ -95,73 +89,73 @@ def pytest_configure(config):
     if config.getvalue('ansible_debug'):
         ansible.utils.VERBOSITY = 5
 
-
-def _verify_inventory(config):
-    # TODO: add yaml validation
-    _inventory = config.getvalue('inventory')
-    try:
-        return os.path.exists(_inventory)
-    except:
-        return False
-
-
-def pytest_collection_modifyitems(session, config, items):
-    requires_inventory = False
-    for item in items:
-        try:
-            if not requires_inventory:
-                if any([fixture == 'ctx' for fixture in item.fixturenames]):
-                    requires_inventory = True
-        except AttributeError:
-            continue
-
-    if requires_inventory:
-        errors = []
-        if not _verify_inventory(config):
-            errors.append("Unable to load an inventory file, "
-                          "specify one with the --inventory parameter.")
-
-        if errors:
-            raise pytest.UsageError(*errors)
-
-
-def pytest_report_header(config):
-    '''
-    Include the version of infrastructure in the report header
-    '''
-    return 'Infrastructure version ...'
-
-
-def pytest_keyboard_interrupt(excinfo):
-    if queue is not None:
-        queue.join()
-
-
-def pytest_internalerror(excrepr, excinfo):
-    if queue is not None:
-        queue.join()
-
-
-@pytest.yield_fixture(scope='session')
-def ctx(request):
-    '''
-    Return Environment instance with function scope.
-    '''
-    yield initialize_context(request)
-
-
-@pytest.yield_fixture(scope='session')
-def run(request, ctx):
-    '''
-    Return _AnsibleModule instance with function scope.
-    '''
-    global queue
-    queue = RedisQueue()
-#    queue = ZeroMQueue()
-
-    consumer = Dispatcher(queue, ctx)
-    consumer.daemon = True
-    consumer.start()
-
-    yield initialize_ansible(request, queue)
-    queue.join()
+#
+# def _verify_inventory(config):
+#     # TODO: add yaml validation
+#     _inventory = config.getvalue('inventory')
+#     try:
+#         return os.path.exists(_inventory)
+#     except:
+#         return False
+#
+#
+# def pytest_collection_modifyitems(session, config, items):
+#     requires_inventory = False
+#     for item in items:
+#         try:
+#             if not requires_inventory:
+#                 if any([fixture == 'ctx' for fixture in item.fixturenames]):
+#                     requires_inventory = True
+#         except AttributeError:
+#             continue
+#
+#     if requires_inventory:
+#         errors = []
+#         if not _verify_inventory(config):
+#             errors.append("Unable to load an inventory file, "
+#                           "specify one with the --inventory parameter.")
+#
+#         if errors:
+#             raise pytest.UsageError(*errors)
+#
+#
+# def pytest_report_header(config):
+#     '''
+#     Include the version of infrastructure in the report header
+#     '''
+#     return 'Infrastructure version ...'
+#
+#
+# def pytest_keyboard_interrupt(excinfo):
+#     if queue is not None:
+#         queue.join()
+#
+#
+# def pytest_internalerror(excrepr, excinfo):
+#     if queue is not None:
+#         queue.join()
+#
+#
+# @pytest.yield_fixture(scope='session')
+# def ctx(request):
+#     '''
+#     Return Environment instance with function scope.
+#     '''
+#     yield initialize_context(request)
+#
+#
+# @pytest.yield_fixture(scope='session')
+# def run(request, ctx):
+#     '''
+#     Return _AnsibleModule instance with function scope.
+#     '''
+#     global queue
+#     queue = RedisQueue()
+# #    queue = ZeroMQueue()
+#
+#     consumer = Dispatcher(queue, ctx)
+#     consumer.daemon = True
+#     consumer.start()
+#
+#     yield initialize_ansible(request, queue)
+#     queue.join()
