@@ -7,8 +7,9 @@ from __future__ import (absolute_import, division, print_function,
 import pytest
 import ansible
 from pytest_ansible.node import get_node
-from pytest_ansible.wrappers import AnsibleGroup
+from pytest_ansible.wrappers import (AnsibleGroup, AnsiblePlaybook)
 from ansible.inventory import Inventory
+from ansible import callbacks
 
 
 class CallableNode(object):
@@ -20,6 +21,9 @@ class CallableNode(object):
             return getattr(self.node, item)
         except AttributeError:
             return AnsibleGroup([self.node], module_name=item)
+
+    def playbook(self, playbook):
+        return AnsiblePlaybook(self).run(playbook)
 
 
 class GroupDispatch(list):
@@ -76,6 +80,9 @@ class GroupDispatch(list):
         for k, v in kwargs.iteritems():
             nodes = self._filter(nodes, k, v)
         return nodes
+
+    def playbook(self, playbook):
+        return AnsiblePlaybook(self).run(playbook)
 
 
 class InventoryContext(dict):

@@ -4,6 +4,7 @@
 import ansible
 import ansible.constants as C
 from ansible.runner import Runner
+from ansible import playbook
 from ansible import callbacks
 
 from pytest_ansible.errors import AnsibleCompoundException
@@ -74,14 +75,6 @@ class AnsibleModule(object):
         async = kwargs.pop('run_async', False)
         time_limit = kwargs.pop('time_limit', 60)
 
-        # DEBUG
-        # print self.inventory_manager
-        # print dir(self.inventory_manager)
-        # lhost = self.inventory_manager.get_host('127.0.0.1')
-        # lhost.set_variable('ansible_ssh_user', 'avi')
-        # lhost.set_variable('foo', 'bla')
-        # print lhost.vars
-
         # Build module runner object
         kwargs = dict(
             inventory=self.inventory_manager,
@@ -120,38 +113,38 @@ class AnsibleModule(object):
         else:
             return _ExtendedPoll(runner.run(), None).poll()
 
-    def run_playbook(self, env, playbook=None):
-        '''
-        load playbook by priority
-        1 - from script: ansible.run_playbook('test.yml')
-        2 - from mark: @pytest.mark.ansible(playbook='test.yml')
-        3 - from cli: py.test --ansible-playbook test.yml
-        '''
 
-        playbook = playbook or self.options.get('playbook')
+class AnsibleGroup(AnsibleModule):
+    def __init__(self, nodes, **kwargs):
+        '''
+        Wrap AnsibleModule to handle multiple nodes
+        :param nodes: Node object
+        :param kwargs:
+        :return:
+        '''
+        inventory = nodes[0].inventory
+        pattern = ':'.join([host.name for host in nodes])
+        super(AnsibleGroup, self).__init__(
+            inventory_manager=inventory, pattern=pattern, **kwargs)
 
+
+class AnsiblePlaybook(AnsibleGroup):
+    # TODO: add more playbook validations and configurations
+    def run(self, pb_path):
         # Make sure we aggregate the stats
         stats = callbacks.AggregateStats()
         playbook_cb = callbacks.PlaybookCallbacks(
             verbose=ansible.utils.VERBOSITY)
 
         # TODO: add forks=int
-        pb = ansible.playbook.PlayBook(
-            playbook=playbook,
+        pb = playbook.PlayBook(
+            playbook=pb_path,
             callbacks=playbook_cb,
             runner_callbacks=AnsibleRunnerCallback(),
             inventory=self.inventory_manager,
             stats=stats
         )
         return pb.run()
-
-
-class AnsibleGroup(AnsibleModule):
-    def __init__(self, nodes, **kwargs):
-        inventory = nodes[0].inventory
-        pattern = ':'.join([host.name for host in nodes])
-        super(AnsibleGroup, self).__init__(
-            inventory_manager=inventory, pattern=pattern, **kwargs)
 
 
 class _ExtendedPoll(object):
