@@ -42,6 +42,18 @@ def test_hosts_uname(ctx):
     pp(future.wait(60, 2))
 
 
+def test_hosts_pwd_avi(ctx):
+    print
+    future = ctx.nodes.command('pwd', run_async=True, become_user='avi', connection='ssh')
+    print 'Future >>> ', future
+    pp(future.wait(60, 2))
+
+
+def test_hosts_pwd_root(ctx):
+    print
+    future = ctx.nodes.command('pwd', run_async=True, become_user='root', connection='ssh')
+    print 'Future >>> ', future
+    pp(future.wait(60, 2))
 # @pytest.mark.parametrize('playbook', ['/Users/avi/git/pytest-ansible/tests/play1.yml'])
 # def test_play1(ctx, run, playbook):
 #     print

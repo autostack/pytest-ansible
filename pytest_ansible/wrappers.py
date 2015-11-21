@@ -11,8 +11,8 @@ from pytest_ansible.node import get_node
 
 from pkg_resources import parse_version
 
-# has_ansible_become = \
-#     parse_version(ansible.__version__) >= parse_version('1.9.0')
+has_ansible_become = \
+    parse_version(ansible.__version__) >= parse_version('1.9.0')
 
 
 class AnsibleRunnerCallback(callbacks.DefaultRunnerCallbacks):
@@ -49,6 +49,21 @@ class AnsibleModule(object):
         return AnsibleModule(**self.options)
 
     def __call__(self, *args, **kwargs):
+        '''
+        Adhoc execution wrapper
+        :param args: module arguments
+        :param kwargs:
+         kwargs[run_async]: Running async
+         kwargs[time_limit]: related to async
+         kwargs[forks]: amount of parallel processes
+         kwargs[remote_user]: costume remote user login
+         kwargs[remote_pass]: costume remote user password
+         kwargs[remote_port]: costume remote port
+         kwargs[transport]: support "ssh, paramiko, local"
+         kwargs[become_user]: connect as sudo user
+         kwargs[become_method]: set to ‘sudo’/’su’/’pbrun’/’pfexec’/’doas’
+        :return: Future object in case of async, result dict in case of sync
+        '''
         # Assemble module argument string
         module_args = list()
         if args:
@@ -58,7 +73,6 @@ class AnsibleModule(object):
         # pop async parameters
         async = kwargs.pop('run_async', False)
         time_limit = kwargs.pop('time_limit', 60)
-        forks = kwargs.pop('forks', C.DEFAULT_FORKS)
 
         # DEBUG
         # print self.inventory_manager
@@ -76,32 +90,35 @@ class AnsibleModule(object):
             module_name=self.module_name,
             module_args=module_args,
             complex_args=kwargs,
-            forks=forks,
-            # remote_user='root',
-            # remote_pass='smartvm',
+            forks=kwargs.pop('forks', C.DEFAULT_FORKS),
+            remote_user=kwargs.pop('remote_user', C.DEFAULT_REMOTE_USER),
+            remote_pass=kwargs.pop('remote_pass', C.DEFAULT_REMOTE_PASS),
+            remote_port=kwargs.pop('remote_port', None),
+            transport=kwargs.pop('connection', C.DEFAULT_TRANSPORT),
         )
 
-        # Handle >= 1.9.0 options
-        # if has_ansible_become:
-        #     kwargs.update(dict(
-        #         become=self.options.get('become'),
-        #         become_method=self.options.get('become_method'),
-        #         become_user=self.options.get('become_user'),)
-        #     )
-        # else:
-        #     kwargs.update(dict(
-        #         sudo=self.options.get('sudo'),
-        #         sudo_user=self.options.get('sudo_user'),)
-        #     )
+        if 'become_user' in kwargs:
+            # Handle >= 1.9.0 options
+            if has_ansible_become:
+                kwargs.update(dict(
+                    become=True,
+                    become_method=kwargs.pop('become_method', C.DEFAULT_BECOME_METHOD),
+                    become_user=kwargs.pop('become_user', C.DEFAULT_BECOME_USER)
+                ))
+            else:
+                kwargs.update(dict(
+                    sudo=True,
+                    sudo_user=kwargs.pop('become_user', C.DEFAULT_BECOME_USER))
+                )
 
         runner = Runner(**kwargs)
 
         # Run the module
         if async:
             res, poll = runner.run_async(time_limit=time_limit)
-            return _ExtendedPoller(res, poll)
+            return _ExtendedPoll(res, poll)
         else:
-            return _ExtendedPoller(runner.run(), None).poll()
+            return _ExtendedPoll(runner.run(), None).poll()
 
     def run_playbook(self, env, playbook=None):
         '''
@@ -137,7 +154,7 @@ class AnsibleGroup(AnsibleModule):
             inventory_manager=inventory, pattern=pattern, **kwargs)
 
 
-class _ExtendedPoller(object):
+class _ExtendedPoll(object):
     def __init__(self, result, poller):
         self.__res = result
         self.__poll = poller

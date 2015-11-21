@@ -1,6 +1,7 @@
 CHANGES
 =======
 
+* cleanup code and add dispatch method in client
 * new README
 * update version to 2.0.0
 * push new code base with major changes

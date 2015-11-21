@@ -78,20 +78,20 @@ class GroupDispatch(list):
         return nodes
 
 
-class Context(dict):
+class InventoryContext(dict):
     '''
     Read inventory and split groups to keys
     initiate each host and identify type using class_type
     '''
     def __init__(self, inventory, *args, **kwargs):
-        super(Context, self).__init__(*args, **kwargs)
+        super(InventoryContext, self).__init__(*args, **kwargs)
         self.inventory = inventory
 
     def __getattr__(self, item):
         return self[item]
 
     def __setitem__(self, key, value):
-        super(Context, self).__setitem__(key, GroupDispatch(value))
+        super(InventoryContext, self).__setitem__(key, GroupDispatch(value))
 
 
 def load_context(inventory):
@@ -100,7 +100,7 @@ def load_context(inventory):
     except ansible.errors.AnsibleError as e:
         raise pytest.UsageError(e)
 
-    ctx = Context(inventory_manager)
+    ctx = InventoryContext(inventory_manager)
 
     for grp in inventory_manager.get_groups():
         hosts = grp.get_hosts()
