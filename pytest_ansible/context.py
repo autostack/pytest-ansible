@@ -22,8 +22,8 @@ class CallableNode(object):
         except AttributeError:
             return AnsibleGroup([self.node], module_name=item)
 
-    def playbook(self, playbook):
-        return AnsiblePlaybook(self).run(playbook)
+    def playbook(self, playbook, **kwargs):
+        return AnsiblePlaybook(self).run(playbook, **kwargs)
 
 
 class GroupDispatch(list):
@@ -81,8 +81,8 @@ class GroupDispatch(list):
             nodes = self._filter(nodes, k, v)
         return nodes
 
-    def playbook(self, playbook):
-        return AnsiblePlaybook(self).run(playbook)
+    def playbook(self, playbook, **kwargs):
+        return AnsiblePlaybook(self).run(playbook, **kwargs)
 
 
 class InventoryContext(dict):

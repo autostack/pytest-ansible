@@ -60,5 +60,6 @@ def test_ctx(ctx):
 def test_play1(ctx, playbook):
     print
     print ctx.all.facts
-    pp(ctx.all.playbook(playbook))
-    pp(ctx.all.facts)
+    pp(ctx.all.playbook(playbook, forks=1))
+    for i in ctx.all:
+        assert i.facts, 'Failed to load facts'

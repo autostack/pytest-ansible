@@ -1,6 +1,7 @@
 CHANGES
 =======
 
+* refactor playbook execution
 * add arguments to AnsibleModule.__call__
 * cleanup code and add dispatch method in client
 * new README

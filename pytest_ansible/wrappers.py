@@ -76,7 +76,7 @@ class AnsibleModule(object):
         time_limit = kwargs.pop('time_limit', 60)
 
         # Build module runner object
-        kwargs = dict(
+        options = dict(
             inventory=self.inventory_manager,
             pattern=self.pattern,
             callbacks=AnsibleRunnerCallback(),
@@ -93,18 +93,18 @@ class AnsibleModule(object):
         if 'become_user' in kwargs:
             # Handle >= 1.9.0 options
             if has_ansible_become:
-                kwargs.update(dict(
+                options.update(dict(
                     become=True,
                     become_method=kwargs.pop('become_method', C.DEFAULT_BECOME_METHOD),
                     become_user=kwargs.pop('become_user', C.DEFAULT_BECOME_USER)
                 ))
             else:
-                kwargs.update(dict(
+                options.update(dict(
                     sudo=True,
                     sudo_user=kwargs.pop('become_user', C.DEFAULT_BECOME_USER))
                 )
 
-        runner = Runner(**kwargs)
+        runner = Runner(**options)
 
         # Run the module
         if async:
@@ -130,7 +130,7 @@ class AnsibleGroup(AnsibleModule):
 
 class AnsiblePlaybook(AnsibleGroup):
     # TODO: add more playbook validations and configurations
-    def run(self, pb_path):
+    def run(self, pb_path, **kwargs):
         # Make sure we aggregate the stats
         stats = callbacks.AggregateStats()
         playbook_cb = callbacks.PlaybookCallbacks(
@@ -142,7 +142,8 @@ class AnsiblePlaybook(AnsibleGroup):
             callbacks=playbook_cb,
             runner_callbacks=AnsibleRunnerCallback(),
             inventory=self.inventory_manager,
-            stats=stats
+            stats=stats,
+            forks=kwargs.get('forks', C.DEFAULT_FORKS)
         )
         return pb.run()
 
