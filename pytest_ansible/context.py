@@ -4,12 +4,14 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import os
 import pytest
 import ansible
 from pytest_ansible.node import get_node
 from pytest_ansible.wrappers import (AnsibleGroup, AnsiblePlaybook)
 from ansible.inventory import Inventory
-from ansible import callbacks
+
+import threading
 
 
 class CallableNode(object):
@@ -101,7 +103,8 @@ class InventoryContext(dict):
         super(InventoryContext, self).__setitem__(key, GroupDispatch(value))
 
 
-def load_context(inventory):
+def load_context(inventory, dispatch):
+    print('context thread id is', threading.currentThread(), os.getpid())
     try:
         inventory_manager = Inventory(host_list=inventory)
     except ansible.errors.AnsibleError as e:
@@ -114,6 +117,7 @@ def load_context(inventory):
         if not hosts:
             continue
         ctx[grp.name] = [get_node(host.name, inventory_manager) for host in hosts]
+        dispatch.register(ctx[grp.name])
 
     return ctx
 

@@ -30,5 +30,5 @@ cli_docker_insecure_registries=rcm-img-docker01.build.eng.bos.redhat.com:5001
 #ose3-node1.novalocal openshift_node_labels="{'region':'primary','zone':'east'}"
 #10.8.51.13 openshift_node_labels="{'region':'primary','zone':'east'}"
 #ose3-node2.novalocal openshift_node_labels="{'region':'primary','zone':'west'}"
-#10.8.48.48 openshift_node_labels="{'region':'primary','zone':'west'}"
 127.0.0.1 openshift_node_labels="{'region':'primary', 'zone':'west'}" ansible_connection=ssh ansible_ssh_user=avi
+10.8.52.61 openshift_node_labels="{'region':'primary', 'zone':'west'}" ansible_connection=ssh ansible_ssh_user=cloud-user ansible_sudo=true

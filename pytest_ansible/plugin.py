@@ -5,7 +5,9 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 import ansible
 import pytest
+from pytest_ansible.dispatcher import Dispatcher
 # import ansible.constants as C
+import  threading
 
 from pytest_ansible.context import load_context
 
@@ -122,10 +124,8 @@ def pytest_report_header(config):
 
 @pytest.yield_fixture(scope='session')
 def ctx(request):
-    '''
-    Return Environment instance with function scope.
-    '''
+    dispatch = Dispatcher()
+    dispatch.start()
     inventory = request.config.getvalue('ansible_inventory')
-    yield load_context(inventory=inventory)
-
-
+    yield load_context(inventory=inventory, dispatch=dispatch)
+    dispatch.close()

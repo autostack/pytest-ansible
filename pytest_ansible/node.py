@@ -3,8 +3,9 @@
 
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
-
 from pytest_ansible.utils import memoize
+import threading
+import os
 
 
 class Facts(dict):
@@ -35,6 +36,7 @@ class Node(object):
         return repr_template.format(self, hex(id(self)), self.name)
 
     def _load_setup(self, data):
+        print('node thread id is', threading.currentThread(), os.getpid())
         self._facts = Facts(data['ansible_facts'])
 
     @property
@@ -52,15 +54,6 @@ class Node(object):
     @property
     def inventory(self):
         return self._inventory
-
-    # def dispatch(self, invocation, changed, **kwargs):
-    def dispatch(self, **kwargs):
-        # FIXME: this is just a poc for loading results
-        invocation = kwargs.get('invocation')
-        try:
-            getattr(self, '_load_' + invocation['module_name'])(kwargs)
-        except (AttributeError, KeyError):
-            pass
 
 
 @memoize

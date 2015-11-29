@@ -3,5 +3,5 @@ tox
 pytest
 ansible
 six
-redis>=2.7
-#pyzmq>=14.7.0
+#redis>=2.7
+pyzmq>=14.7.0

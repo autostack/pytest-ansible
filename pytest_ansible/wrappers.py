@@ -1,14 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+import os
+import threading
 import ansible
 import ansible.constants as C
+import zmq
 from ansible.runner import Runner
 from ansible import playbook
 from ansible import callbacks
 
 from pytest_ansible.errors import AnsibleCompoundException
-from pytest_ansible.node import get_node
+from pytest_ansible.settings import ZMQ_PORT
 
 from pkg_resources import parse_version
 
@@ -16,17 +21,32 @@ has_ansible_become = \
     parse_version(ansible.__version__) >= parse_version('1.9.0')
 
 
+def zmq_socket():
+    context = zmq.Context()
+    socket = context.socket(zmq.PUSH)
+    socket.bind("tcp://*:%s" % ZMQ_PORT)
+    socket.setsockopt(zmq.LINGER, 0)
+    return socket
+
+
 class AnsibleRunnerCallback(callbacks.DefaultRunnerCallbacks):
     '''
     TODO:
     - handle logs
     '''
+
     def on_ok(self, host, res):
-        get_node(host, self.runner.inventory).dispatch(**res)
+        socket = zmq_socket()
+        socket.send_json({'host': host, 'data': res})
+        # FIXME: replace with log
+        print('on_ok thread id is', self, threading.currentThread(), os.getpid())
         super(AnsibleRunnerCallback, self).on_ok(host, res)
 
     def on_async_ok(self, host, res, jid):
-        get_node(host, self.runner.inventory).dispatch(**res)
+        socket = zmq_socket()
+        socket.send_json({'host': host, 'data': res})
+        # FIXME: replace with log
+        print('on_async_ok thread id is', self, threading.currentThread(), os.getpid())
         super(AnsibleRunnerCallback, self).on_async_ok(host, res, jid)
 
 

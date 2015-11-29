@@ -3,7 +3,7 @@
 
 import pytest
 from pprint import pprint as pp
-
+import time
 __author__ = 'Avi Tal <avi3tal@gmail.com>'
 __date__ = 'Sep 1, 2015'
 
@@ -60,6 +60,9 @@ def test_ctx(ctx):
 def test_play1(ctx, playbook):
     print
     print ctx.all.facts
-    pp(ctx.all.playbook(playbook, forks=1))
+    # pp(ctx.all.playbook(playbook))
+    ctx.all.setup()
+    print 'Done setup'
+    time.sleep(5)
     for i in ctx.all:
-        assert i.facts, 'Failed to load facts'
+        assert i.facts, 'Failed to load facts {}'.format(i)
