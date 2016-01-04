@@ -3,7 +3,7 @@
 
 import pytest
 from pprint import pprint as pp
-
+import time
 __author__ = 'Avi Tal <avi3tal@gmail.com>'
 __date__ = 'Sep 1, 2015'
 
@@ -61,4 +61,16 @@ def test_play1(ctx, playbook):
     print
     print ctx.all.facts
     pp(ctx.all.playbook(playbook))
-    pp(ctx.all.facts)
+    print 'Done setup'
+    for i in ctx.all:
+        assert i.facts, 'Failed to load facts {}'.format(i)
+
+
+def test_facts(ctx):
+    print ctx.all[0].facts.ansible_all_ipv6_addresses
+    for i in ctx.all:
+        assert i.facts, 'Failed to load facts {}'.format(i)
+
+# def test_play1(ctx):
+#     future = ctx.nodes.command('uname -a', run_async=True)
+#     future.wait(timeout=10)

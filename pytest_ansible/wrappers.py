@@ -1,14 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+import os
+import threading
 import ansible
 import ansible.constants as C
+import time
+
 from ansible.runner import Runner
 from ansible import playbook
 from ansible import callbacks
 
 from pytest_ansible.errors import AnsibleCompoundException
-from pytest_ansible.node import get_node
+from pytest_ansible.settings import REDIS_CHANNEL
+from pytest_ansible.redisq import RedisQueue
 
 from pkg_resources import parse_version
 
@@ -16,18 +23,32 @@ has_ansible_become = \
     parse_version(ansible.__version__) >= parse_version('1.9.0')
 
 
+def redis_put(data):
+    socket = RedisQueue(REDIS_CHANNEL)
+    socket.put(data)
+
+
 class AnsibleRunnerCallback(callbacks.DefaultRunnerCallbacks):
     '''
     TODO:
     - handle logs
     '''
+
     def on_ok(self, host, res):
-        get_node(host, self.runner.inventory).dispatch(**res)
+        redis_put({'host': host, 'data': res})
+        # FIXME: replace with log
+        print('on_ok thread id is', self, threading.currentThread(), os.getpid())
         super(AnsibleRunnerCallback, self).on_ok(host, res)
+        # FIXME: Workaround timeout bug with message queue
+        time.sleep(.5)
 
     def on_async_ok(self, host, res, jid):
-        get_node(host, self.runner.inventory).dispatch(**res)
+        redis_put({'host': host, 'data': res})
+        # FIXME: replace with log
+        print('on_async_ok thread id is', self, threading.currentThread(), os.getpid())
         super(AnsibleRunnerCallback, self).on_async_ok(host, res, jid)
+        # FIXME: Workaround timeout bug with message queue
+        time.sleep(.5)
 
 
 class AnsibleModule(object):
@@ -76,7 +97,7 @@ class AnsibleModule(object):
         time_limit = kwargs.pop('time_limit', 60)
 
         # Build module runner object
-        kwargs = dict(
+        options = dict(
             inventory=self.inventory_manager,
             pattern=self.pattern,
             callbacks=AnsibleRunnerCallback(),
@@ -93,18 +114,18 @@ class AnsibleModule(object):
         if 'become_user' in kwargs:
             # Handle >= 1.9.0 options
             if has_ansible_become:
-                kwargs.update(dict(
+                options.update(dict(
                     become=True,
                     become_method=kwargs.pop('become_method', C.DEFAULT_BECOME_METHOD),
                     become_user=kwargs.pop('become_user', C.DEFAULT_BECOME_USER)
                 ))
             else:
-                kwargs.update(dict(
+                options.update(dict(
                     sudo=True,
                     sudo_user=kwargs.pop('become_user', C.DEFAULT_BECOME_USER))
                 )
 
-        runner = Runner(**kwargs)
+        runner = Runner(**options)
 
         # Run the module
         if async:
@@ -130,7 +151,7 @@ class AnsibleGroup(AnsibleModule):
 
 class AnsiblePlaybook(AnsibleGroup):
     # TODO: add more playbook validations and configurations
-    def run(self, pb_path):
+    def run(self, pb_path, **kwargs):
         # Make sure we aggregate the stats
         stats = callbacks.AggregateStats()
         playbook_cb = callbacks.PlaybookCallbacks(
@@ -142,7 +163,8 @@ class AnsiblePlaybook(AnsibleGroup):
             callbacks=playbook_cb,
             runner_callbacks=AnsibleRunnerCallback(),
             inventory=self.inventory_manager,
-            stats=stats
+            stats=stats,
+            forks=kwargs.get('forks', C.DEFAULT_FORKS)
         )
         return pb.run()
 

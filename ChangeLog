@@ -1,6 +1,9 @@
 CHANGES
 =======
 
+* zmq dispatcher, works but still depend on test timeout
+* fix kwargs in runner and renamed to options
+* refactor playbook execution
 * add arguments to AnsibleModule.__call__
 * cleanup code and add dispatch method in client
 * new README
