@@ -7,13 +7,15 @@ import os
 import threading
 import ansible
 import ansible.constants as C
-import zmq
+import time
+
 from ansible.runner import Runner
 from ansible import playbook
 from ansible import callbacks
 
 from pytest_ansible.errors import AnsibleCompoundException
-from pytest_ansible.settings import ZMQ_PORT
+from pytest_ansible.settings import REDIS_CHANNEL
+from pytest_ansible.redisq import RedisQueue
 
 from pkg_resources import parse_version
 
@@ -21,12 +23,9 @@ has_ansible_become = \
     parse_version(ansible.__version__) >= parse_version('1.9.0')
 
 
-def zmq_socket():
-    context = zmq.Context()
-    socket = context.socket(zmq.PUSH)
-    socket.bind("tcp://*:%s" % ZMQ_PORT)
-    socket.setsockopt(zmq.LINGER, 0)
-    return socket
+def redis_put(data):
+    socket = RedisQueue(REDIS_CHANNEL)
+    socket.put(data)
 
 
 class AnsibleRunnerCallback(callbacks.DefaultRunnerCallbacks):
@@ -36,18 +35,20 @@ class AnsibleRunnerCallback(callbacks.DefaultRunnerCallbacks):
     '''
 
     def on_ok(self, host, res):
-        socket = zmq_socket()
-        socket.send_json({'host': host, 'data': res})
+        redis_put({'host': host, 'data': res})
         # FIXME: replace with log
         print('on_ok thread id is', self, threading.currentThread(), os.getpid())
         super(AnsibleRunnerCallback, self).on_ok(host, res)
+        # FIXME: Workaround timeout bug with message queue
+        time.sleep(.5)
 
     def on_async_ok(self, host, res, jid):
-        socket = zmq_socket()
-        socket.send_json({'host': host, 'data': res})
+        redis_put({'host': host, 'data': res})
         # FIXME: replace with log
         print('on_async_ok thread id is', self, threading.currentThread(), os.getpid())
         super(AnsibleRunnerCallback, self).on_async_ok(host, res, jid)
+        # FIXME: Workaround timeout bug with message queue
+        time.sleep(.5)
 
 
 class AnsibleModule(object):

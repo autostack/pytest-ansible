@@ -11,8 +11,8 @@ nodes
 [OSEv3:vars]
 deployment_type=openshift-enterprise
 #deployment_type=atomic-enterprise
-ansible_ssh_user=avi
-#ansible_sudo=false
+ansible_ssh_user=cloud-user
+ansible_sudo=true
 
 class_group = openshift
 
@@ -25,10 +25,9 @@ cli_docker_insecure_registries=rcm-img-docker01.build.eng.bos.redhat.com:5001
 #10.8.52.2
 
 [nodes]
-#ose3-master.novalocal openshift_node_labels="{'region':'infra','zone':'default'}" openshift_schedulable=true
-#10.8.52.2 openshift_node_labels="{'region':'infra','zone':'default'}" openshift_schedulable=true
-#ose3-node1.novalocal openshift_node_labels="{'region':'primary','zone':'east'}"
-#10.8.51.13 openshift_node_labels="{'region':'primary','zone':'east'}"
-#ose3-node2.novalocal openshift_node_labels="{'region':'primary','zone':'west'}"
-127.0.0.1 openshift_node_labels="{'region':'primary', 'zone':'west'}" ansible_connection=ssh ansible_ssh_user=avi
-10.8.52.61 openshift_node_labels="{'region':'primary', 'zone':'west'}" ansible_connection=ssh ansible_ssh_user=cloud-user ansible_sudo=true
+#ose3-master-02.novalocal openshift_node_labels="{'region':'infra','zone':'default'}" openshift_schedulable=true
+#ose3-node2.novalocal openshift_node_labels="{'region':'primary','zone':'east'}"
+#ose3-node3.novalocal openshift_node_labels="{'region':'primary','zone':'west'}"
+10.8.51.205 openshift_node_labels="{'region':'infra','zone':'default'}" openshift_schedulable=true
+10.8.51.207 openshift_node_labels="{'region':'primary','zone':'east'}"
+10.8.51.76 openshift_node_labels="{'region':'primary','zone':'west'}"

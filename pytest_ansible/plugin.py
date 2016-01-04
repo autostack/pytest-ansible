@@ -6,8 +6,6 @@ from __future__ import (absolute_import, division, print_function,
 import ansible
 import pytest
 from pytest_ansible.dispatcher import Dispatcher
-# import ansible.constants as C
-import  threading
 
 from pytest_ansible.context import load_context
 

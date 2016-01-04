@@ -5,10 +5,10 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 import os
 import threading
-import zmq
 import time
-from pytest_ansible.settings import ZMQ_PORT
-from pytest_ansible.zmqsocket import Socket
+
+from pytest_ansible.settings import REDIS_CHANNEL
+from pytest_ansible.redisq import RedisQueue
 
 
 class Dispatcher(threading.Thread):
@@ -16,10 +16,7 @@ class Dispatcher(threading.Thread):
     def __init__(self):
         super(Dispatcher, self).__init__()
         self.active = True
-        self.context = zmq.Context()
-        self.socket = Socket(self.context, zmq.PULL)
-        self.socket.connect("tcp://localhost:%s" % ZMQ_PORT)
-
+        self.socket = RedisQueue(REDIS_CHANNEL)
         # cache nodes
         self._nodes = dict()
 
@@ -30,9 +27,11 @@ class Dispatcher(threading.Thread):
     def run(self):
         while self.active:
             try:
-                # data = self.socket.recv_json(flags=zmq.NOBLOCK)
-                data = self.socket.recv_json(timeout=3)
+                data = self.socket.get()
                 if data is not None:
+                    if data.get('halt', False):
+                        self.active = False
+                        continue
                     func = '_load_{module_name}'.format(**data['data']['invocation'])
                     getattr(self._nodes[data['host']], func)(data['data'])
                     # FIXME: replace with log
@@ -44,10 +43,6 @@ class Dispatcher(threading.Thread):
             time.sleep(0.1)
 
     def close(self):
-        self.active = False
+        self.socket.put({'halt': True})
         self.join()
-
-        # close zmq must be done after join thread
-        self.socket.close()
-        self.context.term()
 

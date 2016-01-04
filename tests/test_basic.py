@@ -60,9 +60,17 @@ def test_ctx(ctx):
 def test_play1(ctx, playbook):
     print
     print ctx.all.facts
-    # pp(ctx.all.playbook(playbook))
-    ctx.all.setup()
+    pp(ctx.all.playbook(playbook))
     print 'Done setup'
-    time.sleep(5)
     for i in ctx.all:
         assert i.facts, 'Failed to load facts {}'.format(i)
+
+
+def test_facts(ctx):
+    print ctx.all[0].facts.ansible_all_ipv6_addresses
+    for i in ctx.all:
+        assert i.facts, 'Failed to load facts {}'.format(i)
+
+# def test_play1(ctx):
+#     future = ctx.nodes.command('uname -a', run_async=True)
+#     future.wait(timeout=10)
