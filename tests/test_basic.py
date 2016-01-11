@@ -67,7 +67,9 @@ def test_play1(ctx, playbook):
 
 
 def test_facts(ctx):
-    print ctx.all[0].facts.ansible_all_ipv6_addresses
+    import pprint
+    # pprint.pprint(ctx.all[0].facts)
+    print ctx.all.facts.memory_mb.real.total
     for i in ctx.all:
         assert i.facts, 'Failed to load facts {}'.format(i)
 

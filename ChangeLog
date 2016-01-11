@@ -1,6 +1,7 @@
 CHANGES
 =======
 
+* add redisq and fix callback dispatcher timeout
 * zmq dispatcher, works but still depend on test timeout
 * fix kwargs in runner and renamed to options
 * refactor playbook execution
