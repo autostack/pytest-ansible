@@ -9,7 +9,7 @@ Getting Started
 
 ### Installation
 * Use virtual environment wrapper [Install virtualenvwrapper](http://virtualenvwrapper.readthedocs.org/en/latest/install.html)
-* Install and start redis serer instance
+* Install and start redis server instance
 ```
 # yum install redist-server
 # redis-server &
