@@ -4,5 +4,5 @@ node{
 }
 stage 'testing'
 node{
-    sh echo 'who'
+    sh 'echo who'
 }
